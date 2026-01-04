@@ -14,6 +14,10 @@
     'rekomendasi' => 'Rekomendasi Org Lain',
   ];
   $cols = array_keys($labels);
+
+  // helper format biar seperti sheet (contoh: 2,4)
+  $fmt1 = fn($n) => number_format((float)$n, 1, ',', '.');
+  $fmt2 = fn($n) => number_format((float)$n, 2, ',', '.');
 @endphp
 
 <h4 class="mb-3">SPK Loyalitas Pelanggan - Profile Matching</h4>
@@ -99,7 +103,8 @@
           <td>{{ $r['kode'] }}</td>
           <td>{{ $r['nama'] }}</td>
           @foreach($cols as $k)
-            <td class="text-center">{{ $r[$k] }}</td>
+            {{-- bobotGap biasanya .5, jadi 1 desimal --}}
+            <td class="text-center">{{ $fmt1($r[$k]) }}</td>
           @endforeach
         </tr>
         @empty
@@ -138,7 +143,8 @@
           <td>{{ $r['kode'] }}</td>
           <td>{{ $r['nama'] }}</td>
           @foreach($cols as $k)
-            <td class="text-center">{{ $r[$k] }}</td>
+            {{-- sheet kamu banyaknya 1 desimal (contoh 2,4) --}}
+            <td class="text-center">{{ $fmt1($r[$k]) }}</td>
           @endforeach
         </tr>
         @empty
@@ -170,8 +176,8 @@
         <tr>
           <td>{{ $r['kode'] }}</td>
           <td>{{ $r['nama'] }}</td>
-          <td class="text-center">{{ $r['C1'] }}</td>
-          <td class="text-center">{{ $r['C2'] }}</td>
+          <td class="text-center">{{ $fmt1($r['C1']) }}</td>
+          <td class="text-center">{{ $fmt1($r['C2']) }}</td>
         </tr>
         @empty
         <tr>
@@ -208,9 +214,9 @@
         <tr>
           <td>{{ $r['kode'] }}</td>
           <td>{{ $r['nama'] }}</td>
-          <td class="text-center">{{ $r['core'] }}</td>
-          <td class="text-center">{{ $r['secondary'] }}</td>
-          <td class="text-center fw-bold">{{ $r['nilai'] }}</td>
+          <td class="text-center">{{ $fmt2($r['core']) }}</td>
+          <td class="text-center">{{ $fmt2($r['secondary']) }}</td>
+          <td class="text-center fw-bold">{{ $fmt2($r['nilai']) }}</td>
           <td class="text-center">{{ $r['rank'] }}</td>
         </tr>
         @empty
