@@ -9,20 +9,20 @@ class SpkController extends Controller
     public function index()
     {
         /**
-         * NILAI IDEAL (sesuai sheet skala 1–6)
-         * Dari contoh gap "deo" di gambar, idealnya = 6 untuk semua kriteria.
+         * NILAI IDEAL (sesuai permintaan)
          */
         $ideal = [
-            'intensitas' => 6,
-            'frekuensi'  => 6,
-            'porsi'      => 6,
-            'loyalitas'  => 6,
-            'lama'       => 6,
-            'rekomendasi'=> 6,
+            'intensitas' => 10,
+            'frekuensi'  => 10,
+            'porsi'      => 10,
+            'loyalitas'  => 10,
+            'lama'       => 9,
+            'rekomendasi'=> 8,
         ];
 
         /**
          * TABEL BOBOT NILAI GAP (standar Profile Matching)
+         * gap: -5..5
          */
         $bobotGap = [
             0  => 6,
@@ -39,7 +39,7 @@ class SpkController extends Controller
         ];
 
         /**
-         * BOBOT PER-KRITERIA (sesuai baris % di sheet)
+         * BOBOT PER-KRITERIA (sesuai sheet kamu)
          * C–E = 60% ; F–H = 40%
          */
         $w = [
@@ -51,9 +51,9 @@ class SpkController extends Controller
             'rekomendasi'=> 0.40,
         ];
 
-        // Kelompok C1 dan C2 (untuk total C1/C2)
-        $colsC1  = ['intensitas','frekuensi','porsi'];          // Core
-        $colsC2  = ['loyalitas','lama','rekomendasi'];          // Secondary
+        // Kelompok C1 dan C2
+        $colsC1  = ['intensitas', 'frekuensi', 'porsi'];        // Core
+        $colsC2  = ['loyalitas', 'lama', 'rekomendasi'];        // Secondary
         $allCols = array_merge($colsC1, $colsC2);
 
         $pelanggans = Pelanggan::all();
@@ -65,24 +65,40 @@ class SpkController extends Controller
         $ranking         = [];
 
         foreach ($pelanggans as $p) {
-            $rowGap    = ['kode' => $p->kode, 'nama' => $p->nama];
-            $rowBobot  = ['kode' => $p->kode, 'nama' => $p->nama];
-            $rowTimbang= ['kode' => $p->kode, 'nama' => $p->nama];
+            $rowGap     = ['kode' => $p->kode, 'nama' => $p->nama];
+            $rowBobot   = ['kode' => $p->kode, 'nama' => $p->nama];
+            $rowTimbang = ['kode' => $p->kode, 'nama' => $p->nama];
 
             foreach ($allCols as $k) {
-                // 1) GAP
-                $gap = (int)$p->$k - (int)$ideal[$k];
-                $rowGap[$k] = $gap;
+                /**
+                 * 1) GAP asli (Aktual - Ideal)
+                 */
+                $gapRaw = (int)$p->$k - (int)$ideal[$k];
 
-                // 2) Bobot GAP (default paling kecil kalau di luar tabel)
-                $bobot = $bobotGap[$gap] ?? 1;
+                /**
+                 * 2) GAP untuk mapping bobot dibatasi -5..5
+                 * supaya tidak jatuh ke default terus kalau gap terlalu besar.
+                 */
+                $gapMap = max(-5, min(5, $gapRaw));
+
+                // Tabel GAP tampilkan yang asli (biar sesuai definisi: aktual-ideal)
+                $rowGap[$k] = $gapRaw;
+
+                /**
+                 * 3) Bobot GAP (pakai gapMap yang sudah dibatasi)
+                 */
+                $bobot = $bobotGap[$gapMap] ?? 1;
                 $rowBobot[$k] = $bobot;
 
-                // 3) Nilai tertimbang (bobot gap * bobot kriteria)
+                /**
+                 * 4) Nilai tertimbang (bobot gap * bobot kriteria)
+                 */
                 $rowTimbang[$k] = round($bobot * $w[$k], 2);
             }
 
-            // Total C1 & C2 (dari tabel tertimbang)
+            /**
+             * Total C1 & C2 (jumlah dari tabel tertimbang)
+             */
             $C1 = 0;
             foreach ($colsC1 as $k) $C1 += $rowTimbang[$k];
 
@@ -92,7 +108,10 @@ class SpkController extends Controller
             $C1 = round($C1, 2);
             $C2 = round($C2, 2);
 
-            // Nilai akhir (core 60%, secondary 40%)
+            /**
+             * Nilai akhir Ranking
+             * Nilai = 60%*C1 + 40%*C2
+             */
             $nilaiCore  = round($C1 * 0.60, 2);
             $nilaiSec   = round($C2 * 0.40, 2);
             $nilaiAkhir = round($nilaiCore + $nilaiSec, 2);
@@ -117,18 +136,18 @@ class SpkController extends Controller
             ];
         }
 
-        // sorting nilai tertinggi
+        // Sorting nilai tertinggi
         usort($ranking, fn($a, $b) => $b['nilai'] <=> $a['nilai']);
 
-        // kasih ranking number
+        // Kasih nomor ranking
         foreach ($ranking as $i => $r) {
             $ranking[$i]['rank'] = $i + 1;
         }
 
         return view('spk.index', compact(
-            'ideal','w',
-            'tabelGap','tabelBobot','tabelTertimbang',
-            'total','ranking'
+            'ideal', 'w',
+            'tabelGap', 'tabelBobot', 'tabelTertimbang',
+            'total', 'ranking'
         ));
     }
 }

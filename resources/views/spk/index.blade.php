@@ -22,10 +22,10 @@
 
 <h4 class="mb-3">SPK Loyalitas Pelanggan - Profile Matching</h4>
 
-{{-- NILAI IDEAL --}}
+{{-- NILAI IDEAL + BOBOT KRITERIA --}}
 <div class="mb-3">
   <div class="d-flex justify-content-between align-items-center mb-2">
-    <div class="fw-bold">Nilai Ideal</div>
+    <div class="fw-bold">Nilai Ideal & Bobot Kriteria</div>
   </div>
 
   <div class="table-wrap table-responsive">
@@ -40,7 +40,14 @@
       <tbody>
         <tr>
           @foreach($cols as $k)
-            <td class="text-center">{{ $ideal[$k] }}</td>
+            <td class="text-center fw-semibold">{{ $ideal[$k] }}</td>
+          @endforeach
+        </tr>
+        <tr class="table-warning">
+          @foreach($cols as $k)
+            <td class="text-center">
+              {{ number_format($w[$k] * 100, 0) }}%
+            </td>
           @endforeach
         </tr>
       </tbody>
@@ -69,7 +76,12 @@
           <td>{{ $r['kode'] }}</td>
           <td>{{ $r['nama'] }}</td>
           @foreach($cols as $k)
-            <td class="text-center">{{ $r[$k] }}</td>
+            @php
+              $gap = (int) $r[$k];
+              $cls = $gap < 0 ? 'text-danger fw-semibold'
+                    : ($gap === 0 ? 'text-success fw-semibold' : '');
+            @endphp
+            <td class="text-center {{ $cls }}">{{ $gap }}</td>
           @endforeach
         </tr>
         @empty
@@ -103,7 +115,6 @@
           <td>{{ $r['kode'] }}</td>
           <td>{{ $r['nama'] }}</td>
           @foreach($cols as $k)
-            {{-- bobotGap biasanya .5, jadi 1 desimal --}}
             <td class="text-center">{{ $fmt1($r[$k]) }}</td>
           @endforeach
         </tr>
@@ -143,7 +154,6 @@
           <td>{{ $r['kode'] }}</td>
           <td>{{ $r['nama'] }}</td>
           @foreach($cols as $k)
-            {{-- sheet kamu banyaknya 1 desimal (contoh 2,4) --}}
             <td class="text-center">{{ $fmt1($r[$k]) }}</td>
           @endforeach
         </tr>
